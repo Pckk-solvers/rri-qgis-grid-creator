@@ -1,0 +1,10 @@
+*__pycache__
+*.shp
+*.asc
+*.sdat
+*.bat
+*.cmd
+*.log
+*.csv
+data/input
+data/output
