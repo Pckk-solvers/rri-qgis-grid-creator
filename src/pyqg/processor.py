@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 import subprocess
 import sys
+import tempfile
+import shutil
 from pathlib import Path
 import os
+from typing import Dict, Any, Optional
+from contextlib import contextmanager
 
 # デフォルト値
 MIN_SLOPE = 0.1
@@ -38,11 +42,34 @@ def run_qgis(alg_id: str, params: dict) -> str:
         sys.exit(result.returncode)
     return result.stdout
 
+@contextmanager
+def temp_sdat_files(*filenames: str) -> Dict[str, str]:
+    """一時的なSDATファイルを作成し、処理後に削除するコンテキストマネージャー
+    
+    Args:
+        *filenames: 作成する一時ファイルのベース名のリスト
+        
+    Yields:
+        Dict[str, str]: 一時ファイルのパスを保持する辞書
+    """
+    temp_dir = tempfile.mkdtemp()
+    temp_files = {}
+    
+    try:
+        for filename in filenames:
+            base_name = Path(filename).stem  # 拡張子を除いたファイル名を取得
+            temp_files[base_name] = str(Path(temp_dir) / f"{base_name}.sdat")
+        yield temp_files
+    finally:
+        # 一時ディレクトリとその内容を削除
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
 def process_dem(
     input_path: str | Path,
     output_dir: str | Path,
     min_slope: float = 0.1,
-    threshold: int = 5
+    threshold: int = 5,
+    keep_temp_files: bool = False
 ) -> dict:
     """
     DEMデータを処理するメイン関数
@@ -60,72 +87,90 @@ def process_dem(
     input_path = Path(input_path)
     output_dir = Path(output_dir)
     
+    # 出力ディレクトリを作成
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     # 出力ファイルのパスを構築
     output_files = {
-        'filled_sdat': output_dir / 'filled.sdat',
         'filled_asc': output_dir / 'filled_asc.asc',
-        'direction_sdat': output_dir / 'direction.sdat',
         'direction_asc': output_dir / 'direction_asc.asc'
     }
     
+    # 一時ファイルのパスを設定
+    temp_sdat_files_map = {
+        'filled': 'filled.sdat',
+        'direction': 'direction.sdat',
+        'segments': 'segments.sdat',
+        'basins': 'basins.sdat'
+    }
+    
     try:
-        # 1) 窪地処理
-        print("\n[1/4] 窪地処理を開始しています...")
-        print(f"  入力ファイル: {input_path}")
-        print(f"  出力先: {output_files['filled_sdat']}")
-        print(f"  最小勾配: {min_slope}")
-        
-        run_qgis(
-            "sagang:fillsinksxxlwangliu",
-            {
-                "ELEV": str(input_path),
-                "FILLED": str(output_files['filled_sdat']),
-                "MINSLOPE": min_slope
-            }
-        )
-        print("  ✅ 窪地処理が完了しました")
+        # 一時ファイル用のコンテキストを作成
+        with temp_sdat_files(*temp_sdat_files_map.values()) as temp_files:
+            # 1) 窪地処理
+            print("\n[1/4] 窪地処理を開始しています...")
+            print(f"  入力ファイル: {input_path}")
+            print(f"  一時ファイル: {temp_files['filled']}" if not keep_temp_files else f"  出力先: {temp_files['filled']}")
+            print(f"  最小勾配: {min_slope}")
+            
+            run_qgis(
+                "sagang:fillsinksxxlwangliu",
+                {
+                    "ELEV": str(input_path),
+                    "FILLED": temp_files['filled'],
+                    "MINSLOPE": min_slope
+                }
+            )
+            print("  ✅ 窪地処理が完了しました")
 
-        # 2) 流向処理
-        print("\n[2/4] 流向・流域解析を開始しています...")
-        print(f"  閾値: {threshold}")
-        print(f"  流向データ出力先: {output_files['direction_sdat']}")
-        
-        run_qgis(
-            "sagang:channelnetworkanddrainagebasins",
-            {
-                "DEM": str(input_path),
-                "DIRECTION": str(output_files['direction_sdat']),
-                "SEGMENTS": "TEMPORARY_OUTPUT",
-                "BASINS": "TEMPORARY_OUTPUT",
-                "THRESHOLD": threshold,
-                "SUBBASINS": True
-            }
-        )
-        print("  ✅ 流向・流域解析が完了しました")
+            # 2) 流向処理
+            print("\n[2/4] 流向・流域解析を開始しています...")
+            print(f"  閾値: {threshold}")
+            print(f"  流向データ一時ファイル: {temp_files['direction']}" if not keep_temp_files else f"  流向データ出力先: {temp_files['direction']}")
+            
+            run_qgis(
+                "sagang:channelnetworkanddrainagebasins",
+                {
+                    "DEM": str(input_path),
+                    "DIRECTION": temp_files['direction'],
+                    "SEGMENTS": temp_files['segments'],
+                    "BASINS": temp_files['basins'],
+                    "THRESHOLD": threshold,
+                    "SUBBASINS": True
+                }
+            )
+            print("  ✅ 流向・流域解析が完了しました")
 
-        # 3-1) 変換処理 (filled)
-        print("\n[3/4] 埋め立て済みDEMをASC形式に変換しています...")
-        run_qgis(
-            "gdal:translate",
-            {
-                "INPUT": str(output_files['filled_sdat']),
-                "OUTPUT": str(output_files['filled_asc']),
-                "DATA_TYPE": 0
-            }
-        )
-        print(f"  ✅ 変換完了: {output_files['filled_asc']}")
-        
-        # 3-2) 変換処理 (direction)
-        print("\n[4/4] 流向データをASC形式に変換しています...")
-        run_qgis(
-            "gdal:translate",
-            {
-                "INPUT": str(output_files['direction_sdat']),
-                "OUTPUT": str(output_files['direction_asc']),
-                "DATA_TYPE": 0
-            }
-        )
-        print(f"  ✅ 変換完了: {output_files['direction_asc']}")
+            # 3) ラスタ変換 (filled.sdat → filled_asc.asc)
+            print("\n[3/4] ラスタ変換を実行しています (filled.sdat → filled_asc.asc)...")
+            run_qgis(
+                "gdal:translate",
+                {
+                    "INPUT": temp_files['filled'],
+                    "OUTPUT": str(output_files['filled_asc'])
+                }
+            )
+            print("  ✅ ラスタ変換が完了しました (filled)")
+
+            # 4) ラスタ変換 (direction.sdat → direction_asc.asc)
+            print("\n[4/4] ラスタ変換を実行しています (direction.sdat → direction_asc.asc)...")
+            run_qgis(
+                "gdal:translate",
+                {
+                    "INPUT": temp_files['direction'],
+                    "OUTPUT": str(output_files['direction_asc'])
+                }
+            )
+            print("  ✅ ラスタ変換が完了しました (direction)")
+            
+            # 一時ファイルを保持する場合、出力ディレクトリにコピー
+            if keep_temp_files:
+                for key, temp_path in temp_files.items():
+                    if Path(temp_path).exists():
+                        dest_path = output_dir / f"{key}.sdat"
+                        shutil.copy2(temp_path, dest_path)
+                        output_files[f"{key}_sdat"] = dest_path
+                        print(f"  ✅ 一時ファイルを保持: {dest_path}")
         
         # 処理完了メッセージ
         print("\n=======================================")
