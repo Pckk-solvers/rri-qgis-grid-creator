@@ -69,6 +69,8 @@ JSONの場合
 ## 流向処理
 ```cmd
 "C:\Program Files\QGIS 3.40.4\bin\qgis_process-qgis-ltr.bat" run sagang:channelnetworkanddrainagebasins --distance_units=meters --area_units=m2 --ellipsoid=EPSG:7030 --DEM="C:/Users/yuuta.ochiai/Documents/GitHub/rri-qgis-grid-creator/data/input/domain_mesh_elev.asc" --DIRECTION="C:/Users/yuuta.ochiai/Documents/GitHub/rri-qgis-grid-creator/data/output/ta.sdat" --SEGMENTS=TEMPORARY_OUTPUT --BASINS=TEMPORARY_OUTPUT --THRESHOLD=5 --SUBBASINS=true
+
+"C:\Program Files\QGIS 3.40.4\bin\qgis_process-qgis-ltr.bat" run sagang:channelnetworkanddrainagebasins --distance_units=meters --area_units=m2 --ellipsoid=EPSG:7030 --DEM='C:/Users/manami.fujimoto/Desktop/mesh_test/269-645/output/filled_asc.asc' --DIRECTION='C:/Users/manami.fujimoto/Desktop/mesh_test/0805/flow_dir.sdat' --SEGMENTS=TEMPORARY_OUTPUT --BASINS=TEMPORARY_OUTPUT --THRESHOLD=5 --SUBBASINS=true
 ```
 
 JSONの場合

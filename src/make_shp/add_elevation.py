@@ -142,7 +142,7 @@ def load_points(paths, target_crs, zcol_arg=None):
     
     raise ValueError("有効なデータが読み込めませんでした")
 
-def main(basin_shp, domain_shp, points_path, out_dir, zcol=None, nodata=None):
+def main(domain_shp, basin_shp, points_path, out_dir, zcol=None, nodata=None):
     # Nodata値が指定されていない場合はデフォルト値を使用
     if nodata is None:
         nodata = DEFAULT_NODATA

@@ -33,36 +33,46 @@ def main(domain_shp, basin_shp, cells_x, cells_y, out_dir):
     basin_gdf = gpd.read_file(basin_shp).to_crs(domain_gdf.crs)
     basin_union = basin_gdf.unary_union
 
+    # 有効なジオメトリのみをフィルタリング
+    valid_domain = domain_gdf[domain_gdf.geometry.notna() & domain_gdf.geometry.is_valid]
+    
+    if valid_domain.empty:
+        raise ValueError("有効なジオメトリが含まれていません")
+
     all_grids = []
     basin_grids = []
 
     # 各フィーチャごとにグリッド生成
-    for idx, row in domain_gdf.iterrows():
-        nx = cells_x
-        ny = cells_y
+    for idx, row in valid_domain.iterrows():
+        try:
+            extent = row.geometry.bounds
+            grid = build_grid(extent, cells_x, cells_y, valid_domain.crs)
+            grid['feature_id'] = row.get('id', idx)
+            all_grids.append(grid)
 
-        extent = row.geometry.bounds  # (minx, miny, maxx, maxy)
-        grid = build_grid(extent, nx, ny, domain_gdf.crs)
-        grid['feature_id'] = row.get('id', idx)
-        all_grids.append(grid)
+            # 流域界でクリップ
+            mask = grid.geometry.intersects(basin_union)
+            basin_sub = grid[mask].copy()
+            basin_sub['feature_id'] = row.get('id', idx)
+            basin_grids.append(basin_sub)
+        except Exception as e:
+            print(f"[WARNING] 行 {idx} の処理中にエラーが発生しました: {str(e)}")
+            continue
 
-        # 流域界でクリップ
-        mask = grid.geometry.intersects(basin_union)
-        basin_sub = grid[mask].copy()
-        basin_sub['feature_id'] = row.get('id', idx)
-        basin_grids.append(basin_sub)
+    if not all_grids:
+        raise ValueError("有効なグリッドが生成されませんでした")
 
     # 結合して出力
     os.makedirs(out_dir, exist_ok=True)
-    domain_mesh = gpd.GeoDataFrame(pd.concat(all_grids, ignore_index=True), crs=domain_gdf.crs)
-    basin_mesh = gpd.GeoDataFrame(pd.concat(basin_grids, ignore_index=True), crs=domain_gdf.crs)
-
+    domain_mesh = gpd.GeoDataFrame(pd.concat(all_grids, ignore_index=True), crs=valid_domain.crs)
+    basin_mesh = gpd.GeoDataFrame(pd.concat(basin_grids, ignore_index=True), crs=valid_domain.crs)
     domain_out = os.path.join(out_dir, 'domain_mesh.shp')
     basin_out = os.path.join(out_dir, 'basin_mesh.shp')
     domain_mesh.to_file(domain_out)
     basin_mesh.to_file(basin_out)
     print(f"domain mesh -> {domain_out}")
     print(f"basin mesh  -> {basin_out}")
+    return domain_mesh, basin_mesh
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='全フィーチャ共通セル数でメッシュ生成')
@@ -73,4 +83,4 @@ if __name__ == '__main__':
     parser.add_argument('--outdir', default='./outputs', help='出力フォルダ')
     args = parser.parse_args()
 
-    main(args.domain, args.basin, args.cells_x, args.cells_y, args.outdir)
+    domain_mesh, basin_mesh = main(args.domain, args.basin, args.cells_x, args.cells_y, args.outdir)

@@ -35,19 +35,26 @@ def extract_cells(standard_shp, domain_shp, output_shp, id_col=None):
     mask = mesh_gdf.geometry.intersects(domain_union)
     extracted = mesh_gdf.loc[mask].copy()
 
-    # 属性を削減: ID 列があれば保持、それ以外は geometry のみ
-    cols = ['geometry']
+    # すべてのポリゴンを1つのマルチポリゴンに結合
+    from shapely.ops import unary_union
+    combined_geom = unary_union(extracted.geometry)
+    
+    # 新しいGeoDataFrameを作成（単一のフィーチャに）
+    combined_gdf = gpd.GeoDataFrame(geometry=[combined_geom], crs=extracted.crs)
+    
+    # 元のID列を保持する場合
     if id_col and id_col in extracted.columns:
-        cols.insert(0, id_col)
-    extracted = extracted[cols]
-
+        # 最初の有効なIDを取得（または適切な方法でIDを選択）
+        first_valid_id = extracted[id_col].iloc[0] if not extracted.empty else None
+        combined_gdf[id_col] = first_valid_id
+    
     # 出力先ディレクトリ作成
     out_dir = os.path.dirname(output_shp)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
     # ファイル出力
-    extracted.to_file(output_shp)
+    combined_gdf.to_file(output_shp)
     print(f"Extracted {len(extracted)} cells to {output_shp}")
 
 def main():

@@ -131,7 +131,7 @@ def process_dem(
             run_qgis(
                 "sagang:channelnetworkanddrainagebasins",
                 {
-                    "DEM": str(input_path),
+                    "DEM": temp_files['filled'],
                     "DIRECTION": temp_files['direction'],
                     "SEGMENTS": temp_files['segments'],
                     "BASINS": temp_files['basins'],
