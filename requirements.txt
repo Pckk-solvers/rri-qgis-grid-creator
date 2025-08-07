@@ -4,3 +4,4 @@ geopandas>=1.1.1
 shapely>=2.1.1
 numpy>=2.3.1
 pandas>=2.3.1
+pyinstaller>=6.15.0
