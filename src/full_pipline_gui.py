@@ -131,7 +131,8 @@ class FullPipelineApp(ttk.Frame):
 
         # 出力フォルダ
         ttk.Label(form, text="出力フォルダ", width=lbl_w, anchor="e").grid(row=9, column=0, **paddings)
-        self.outdir_var = tk.StringVar(value="outputs")
+        default_output = str(BASE_DIR / "outputs")
+        self.outdir_var = tk.StringVar(value=default_output)
         ttk.Entry(form, textvariable=self.outdir_var, width=ent_w, state="readonly").grid(row=9, column=1, **paddings)
         ttk.Button(form, text="参照", command=self._browse_outdir).grid(row=9, column=2, **paddings)
 
@@ -167,10 +168,12 @@ class FullPipelineApp(ttk.Frame):
             self.stdmesh_var.set(p)
 
     def _browse_outdir(self) -> None:
-        """出力フォルダを選択"""
+        """出力フォルダを選択し、絶対パスで設定"""
         d = filedialog.askdirectory()
         if d:
-            self.outdir_var.set(d)
+            # 絶対パスに正規化して設定
+            abs_path = Path(d).resolve()
+            self.outdir_var.set(str(abs_path))
 
     def _run(self) -> None:
         """入力チェックとバックグラウンド実行"""
