@@ -2,7 +2,6 @@ name: Build and Draft Release Windows EXE
 
 on:
   push:
-    # v1.11, v2.0 など “v数字.数字” のタグをプッシュしたときに実行
     tags:
       - 'v*.*'
   workflow_dispatch:
@@ -11,7 +10,6 @@ jobs:
   build-and-release:
     runs-on: windows-latest
     env:
-      # タグ名そのまま（例: "v1.11"）
       VERSION: ${{ github.ref_name }}
 
     steps:
@@ -47,7 +45,6 @@ jobs:
             --hidden-import "tkinter.filedialog" \
             --hidden-import "tkinter.messagebox" \
             --strip \
-            --upx \
             --console \
             src\\full_pipline_gui.py
 
@@ -55,7 +52,6 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          # タグ名をそのまま使って Draft Release を作成
           tag_name: ${{ env.VERSION }}
           release_name: Release ${{ env.VERSION }}
           draft: true
