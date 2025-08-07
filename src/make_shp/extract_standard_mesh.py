@@ -54,8 +54,9 @@ def extract_cells(standard_shp, domain_shp, output_shp, id_col=None):
         os.makedirs(out_dir, exist_ok=True)
 
     # ファイル出力
-    combined_gdf.to_file(output_shp)
+    combined_file=combined_gdf.to_file(output_shp)
     print(f"Extracted {len(extracted)} cells to {output_shp}")
+    return combined_file
 
 def main():
     parser = argparse.ArgumentParser(description='標準地域メッシュから重なるセルを抽出')
@@ -65,12 +66,13 @@ def main():
     parser.add_argument('--id',            help='保持するID列名 (省略可)')
     args = parser.parse_args()
 
-    extract_cells(
+    file=extract_cells(
         args.standard_mesh,
         args.domain,
         args.output,
         args.id
     )
+    return file
 
 if __name__ == '__main__':
     main()

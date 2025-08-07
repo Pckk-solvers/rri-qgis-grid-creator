@@ -9,3 +9,6 @@
 data/input
 data/output
 outputs
+build
+venv
+dist

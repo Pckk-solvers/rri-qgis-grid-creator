@@ -47,7 +47,7 @@ call "C:\Program Files\QGIS 3.40.4\bin\python-qgis-ltr.bat" C:\Users\yuuta.ochia
     SEGMENTS="TEMPORARY_OUTPUT" ^
     BASINS="TEMPORARY_OUTPUT"
 
-
+## qgis_processの使い方はこのように使う。
 "C:\Program Files\QGIS 3.40.4\bin\qgis_process-qgis-ltr.bat" run sagang:fillsinksxxlwangliu --distance_units=meters --area_units=m2 --ellipsoid=EPSG:7030 --ELEV="C:/Users/yuuta.ochiai/Documents/GitHub/rri-qgis-grid-creator/data/input/domain_mesh_elev.asc" --FILLED="C:/Users/yuuta.ochiai/Documents/GitHub/rri-qgis-grid-creator/data/output/files.sdat" --MINSLOPE=0.1
 
 

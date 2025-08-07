@@ -213,8 +213,10 @@ def main(domain_shp, basin_shp, points_path, out_dir, zcol=None, nodata=None):
     # 拡張子以外の部分を取得
     basin_filename = os.path.splitext(os.path.basename(basin_shp))[0]
     domain_filename = os.path.splitext(os.path.basename(domain_shp))[0]
-    basin.to_file(f"{out_dir}/{basin_filename}_elev.shp")
-    domain.to_file(f"{out_dir}/{domain_filename}_elev.shp")
+    basin_file=basin.to_file(f"{out_dir}/{basin_filename}_elev.shp")
+    domain_file=domain.to_file(f"{out_dir}/{domain_filename}_elev.shp")
+    return basin_file, domain_file
+    
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description="標高付与")

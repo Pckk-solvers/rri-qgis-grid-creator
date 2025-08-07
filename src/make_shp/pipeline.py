@@ -2,10 +2,53 @@
 import os
 import argparse
 import glob
-from pathlib import Path
 from src.make_shp.add_elevation import main as elevation_main
 from src.make_shp.extract_standard_mesh import extract_cells
 from shp_to_asc.mesh_to_asc import convert_mesh_to_asc
+from src.make_shp.generate_mesh import main as generate_mesh_main
+
+
+def clean_up(output_files, keep_files=None):
+    """
+    出力ディレクトリ内の不要なファイルを削除する
+    
+    Args:
+        output_files: 出力ファイルの辞書
+        keep_files: 削除から除外するファイル名のリスト（例: ['domain_mesh_elev.shp']）
+    """
+    if keep_files is None:
+        keep_files = ['domain_mesh_elev.shp', 'domain_mesh_elev.asc']
+    
+    # 出力ディレクトリを取得
+    out_dir = os.path.dirname(next(iter(output_files.values())))
+    
+    # 削除対象となるファイルパターン
+    patterns = [
+        'domain_mesh.*',  # domain_mesh.shp, .dbf, .shx など
+        'basin_mesh.*',   # basin_mesh.shp, .dbf, .shx など
+        'domain_standard_mesh.*'  # 標準メッシュ抽出ファイル
+        'basin_mesh_elev.*',  # 標高付与ファイル
+    ]
+    
+    # 削除対象のファイルを収集
+    files_to_remove = []
+    for pattern in patterns:
+        files_to_remove.extend(glob.glob(os.path.join(out_dir, pattern)))
+    
+    # 削除対象から除外するファイルをフィルタリング
+    files_to_remove = [
+        f for f in files_to_remove 
+        if not any(keep in os.path.basename(f) for keep in keep_files)
+    ]
+    
+    # ファイルを削除
+    for file_path in files_to_remove:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"[INFO] 一時ファイルを削除しました: {file_path}")
+        except Exception as e:
+            print(f"[WARNING] ファイルの削除に失敗しました: {file_path} - {e}")
 
 def pipeline(domain_shp, basin_shp, num_cells_x, num_cells_y, points_path, out_dir, 
              standard_mesh, zcol=None, nodata=None, mesh_id=None):
@@ -31,7 +74,6 @@ def pipeline(domain_shp, basin_shp, num_cells_x, num_cells_y, points_path, out_d
         
         # メッシュ生成を実行
         try:
-            from src.make_shp.generate_mesh import main as generate_mesh_main
             print(f"\n=== メッシュ生成を開始します ===")
             domain_mesh = os.path.join(out_dir, "domain_mesh.shp")
             basin_mesh = os.path.join(out_dir, "basin_mesh.shp")
@@ -97,32 +139,19 @@ def pipeline(domain_shp, basin_shp, num_cells_x, num_cells_y, points_path, out_d
         print(f"[WARNING] 処理中にエラーが発生しました: {e}")
         # エラーが発生しても、これまでに作成されたoutput_filesは保持する
 
-    # # 5) 中間ファイルをまとめて削除
-    # try:
-    #     for basename in ("domain_mesh", "basin_mesh"):
-    #         pattern = os.path.join(out_dir, f"{basename}.*")
-    #         for fp in glob.glob(pattern):
-    #             # ASCファイルは削除しない
-    #             if not fp.lower().endswith('.asc'):
-    #                 try:
-    #                     os.remove(fp)
-    #                 except Exception as e:
-    #                     print(f"[WARNING] ファイルの削除に失敗しました: {fp} - {e}")
-    # except Exception as e:
-    #     print(f"[WARNING] 中間ファイルの削除中にエラーが発生しました: {e}")
+    # 5) 不要な一時ファイルを削除
+    print("\n=== 一時ファイルをクリーンアップします ===")
+    clean_up(output_files)
     
     # 6) 出力ファイルのパスを表示
     print("\n=== 出力ファイル一覧 ===")
     if output_files:  # output_filesが空でない場合のみ表示
         for name, path in output_files.items():
-            if os.path.exists(path):
+            if os.path.exists(path):  # 存在するファイルのみ表示
                 print(f"- {name}: {path}")
-            else:
-                print(f"- [WARNING] ファイルが見つかりません: {name} ({path})")
-    else:
-        print("出力ファイルは作成されませんでした。")
     
     return output_files  # 呼び出し元で利用できるように返す
+
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(

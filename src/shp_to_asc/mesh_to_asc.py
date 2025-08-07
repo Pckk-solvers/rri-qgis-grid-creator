@@ -44,6 +44,7 @@ def convert_mesh_to_asc(
     )
     
     print(f"変換が完了しました: {output_asc}")
+    return output_asc
 
 def main():
     # コマンドライン引数の設定

@@ -68,11 +68,11 @@ def main(domain_shp, basin_shp, cells_x, cells_y, out_dir):
     basin_mesh = gpd.GeoDataFrame(pd.concat(basin_grids, ignore_index=True), crs=valid_domain.crs)
     domain_out = os.path.join(out_dir, 'domain_mesh.shp')
     basin_out = os.path.join(out_dir, 'basin_mesh.shp')
-    domain_mesh.to_file(domain_out)
-    basin_mesh.to_file(basin_out)
+    domain_mesh_file=domain_mesh.to_file(domain_out)
+    basin_mesh_file=basin_mesh.to_file(basin_out)
     print(f"domain mesh -> {domain_out}")
     print(f"basin mesh  -> {basin_out}")
-    return domain_mesh, basin_mesh
+    return domain_mesh_file, basin_mesh_file
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='全フィーチャ共通セル数でメッシュ生成')
@@ -83,4 +83,4 @@ if __name__ == '__main__':
     parser.add_argument('--outdir', default='./outputs', help='出力フォルダ')
     args = parser.parse_args()
 
-    domain_mesh, basin_mesh = main(args.domain, args.basin, args.cells_x, args.cells_y, args.outdir)
+    domain_mesh_file, basin_mesh_file = main(args.domain, args.basin, args.cells_x, args.cells_y, args.outdir)
