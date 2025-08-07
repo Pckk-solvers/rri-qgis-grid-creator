@@ -92,8 +92,8 @@ def process_dem(
     
     # 出力ファイルのパスを構築
     output_files = {
-        'filled_asc': output_dir / 'filled_asc.asc',
-        'direction_asc': output_dir / 'direction_asc.asc'
+        'filled_asc': output_dir / 'filled.asc',
+        'direction_asc': output_dir / 'direction.asc'
     }
     
     # 一時ファイルのパスを設定
@@ -141,8 +141,8 @@ def process_dem(
             )
             print("  ✅ 流向・流域解析が完了しました")
 
-            # 3) ラスタ変換 (filled.sdat → filled_asc.asc)
-            print("\n[3/4] ラスタ変換を実行しています (filled.sdat → filled_asc.asc)...")
+            # 3) ラスタ変換 (filled.sdat → filled.asc)
+            print("\n[3/4] ラスタ変換を実行しています (filled.sdat → filled.asc)...")
             run_qgis(
                 "gdal:translate",
                 {
@@ -152,8 +152,8 @@ def process_dem(
             )
             print("  ✅ ラスタ変換が完了しました (filled)")
 
-            # 4) ラスタ変換 (direction.sdat → direction_asc.asc)
-            print("\n[4/4] ラスタ変換を実行しています (direction.sdat → direction_asc.asc)...")
+            # 4) ラスタ変換 (direction.sdat → direction.asc)
+            print("\n[4/4] ラスタ変換を実行しています (direction.sdat → direction.asc)...")
             run_qgis(
                 "gdal:translate",
                 {
