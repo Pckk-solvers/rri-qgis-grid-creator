@@ -26,7 +26,7 @@ def clean_up(output_files, keep_files=None):
     patterns = [
         'domain_mesh.*',  # domain_mesh.shp, .dbf, .shx など
         'basin_mesh.*',   # basin_mesh.shp, .dbf, .shx など
-        'domain_standard_mesh.*'  # 標準メッシュ抽出ファイル
+        'domain_standard_mesh.*',  # 標準メッシュ抽出ファイル
         'basin_mesh_elev.*',  # 標高付与ファイル
     ]
     
