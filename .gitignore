@@ -1,7 +1,6 @@
 *__pycache__
 *.asc
 *.sdat
-*.bat
 *.cmd
 *.log
 *.csv
