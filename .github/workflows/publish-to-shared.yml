@@ -1,0 +1,120 @@
+name: Publish selected files to shared
+
+on:
+  push:
+    branches: [ main ]           # main 更新時にのみ実行
+  workflow_dispatch:
+    inputs:
+      include_readme:
+        description: 'Also copy README.md'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write                # ← 必須（GITHUB_TOKEN で push するため）
+
+env:
+  TARGET_BRANCH: shared
+  # 共有ブランチに含める “ファイル” と “ディレクトリ” をホワイトリストで指定
+  FILES: |
+    setup.cmd
+    run.cmd
+    .gitignore
+    .gitattributes
+    requirements.txt
+    constraints.txt
+  DIRS: |
+    src
+    build_scripts
+    config
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Git author
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Prepare shared worktree
+        run: |
+          set -e
+          if git ls-remote --exit-code --heads origin "$TARGET_BRANCH"; then
+            git fetch origin "$TARGET_BRANCH"
+            git worktree add shared-branch origin/"$TARGET_BRANCH"
+          else
+            # 初回：main から shared を作成
+            git fetch origin main
+            git worktree add -b "$TARGET_BRANCH" shared-branch origin/main
+          fi
+
+      - name: Build whitelist
+        id: list
+        shell: bash
+        run: |
+          set -e
+          LIST=share-list.txt
+          : > "$LIST"
+          # files
+          while read -r f; do
+            [ -z "$f" ] && continue
+            echo "$f" >> "$LIST"
+          done <<< "$FILES"
+          # dirs（末尾に / を付与）
+          while read -r d; do
+            [ -z "$d" ] && continue
+            echo "$d/" >> "$LIST"
+          done <<< "$DIRS"
+          # README を含めるオプション
+          if [[ "${{ github.event.inputs.include_readme }}" == "true" ]]; then
+            echo "README.md" >> "$LIST"
+          fi
+          echo "list=$LIST" >> $GITHUB_OUTPUT
+
+      - name: Sanity check required paths exist
+        shell: bash
+        run: |
+          set -e
+          while read -r p; do
+            [ -z "$p" ] && continue
+            if [ ! -e "$p" ]; then
+              echo "::error::Missing required path: $p"
+              exit 1
+            fi
+          done < "${{ steps.list.outputs.list }}"
+
+      - name: Clean shared tree (keep only .git)
+        shell: bash
+        run: |
+          set -e
+          cd shared-branch
+          # 直下のすべてを削除（.git を除く）
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+
+      - name: Copy whitelist into shared
+        shell: bash
+        run: |
+          set -e
+          rsync -av --prune-empty-dirs \
+            --files-from="${{ steps.list.outputs.list }}" \
+            "$GITHUB_WORKSPACE"/ shared-branch/
+
+      - name: Commit & push if changed
+        shell: bash
+        run: |
+          set -e
+          cd shared-branch
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git commit -m "ci: publish selected files from main (${GITHUB_SHA::7}) [skip ci]"
+          git push origin HEAD:"$TARGET_BRANCH"
