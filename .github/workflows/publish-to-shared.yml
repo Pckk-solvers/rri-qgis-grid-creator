@@ -22,7 +22,6 @@ env:
     .gitignore
     .gitattributes
     requirements.txt
-    constraints.txt
   DIRS: |
     src
     build_scripts
