@@ -1,44 +1,75 @@
 [CmdletBinding()]
 param(
-  [switch]$Recreate,
-  [string]$Requirements,
-  [string]$Constraints
+  [switch]$Recreate,              # remove and recreate venv
+  [string]$Requirements,          # optional custom path to requirements.txt
+  [string]$Constraints            # optional constraints file
 )
 
 $ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
 
-# ← ここが肝：ps1 の 1 つ上を「リポジトリルート」とみなす
+# repo root = parent of this script folder
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repoRoot
 
-# requirements.txt の場所を決定（引数 > ルート > build_scripts の順に探索）
+# resolve requirements.txt (arg > repo root > script dir)
+function Resolve-FirstExisting([string[]]$paths) {
+  foreach ($p in $paths) { if (Test-Path $p) { return (Resolve-Path $p).Path } }
+  return $null
+}
+
+$req = $null
 if ($Requirements) {
+  if (!(Test-Path $Requirements)) { throw "requirements not found: $Requirements" }
   $req = (Resolve-Path $Requirements).Path
 } else {
-  $candidates = @(
+  $req = Resolve-FirstExisting @(
     (Join-Path $repoRoot 'requirements.txt'),
     (Join-Path $PSScriptRoot 'requirements.txt')
   )
-  $req = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-  if (-not $req) { throw "requirements.txt が見つかりません。探索: `n- $($candidates -join "`n- ")" }
 }
 
-# venv はルート直下
+if (-not $req) { throw 'requirements.txt not found.' }
+
+# venv under repo root
 $venv = Join-Path $repoRoot '.venv'
-if ($Recreate -and (Test-Path $venv)) { Remove-Item $venv -Recurse -Force }
-if (!(Test-Path $venv)) { & python -m venv $venv }
+if ($Recreate -and (Test-Path $venv)) {
+  Remove-Item $venv -Recurse -Force
+}
+if (!(Test-Path $venv)) {
+  # create venv (prefer "python", fallback to launcher "py -3")
+  $created = $false
+  try {
+    & python -m venv $venv
+    $created = $true
+  } catch {
+    $created = $false
+  }
+  if (-not $created) {
+    try {
+      & py -3 -m venv $venv
+      $created = $true
+    } catch {
+      $created = $false
+    }
+  }
+  if (-not $created) { throw 'failed to create venv. ensure Python is on PATH.' }
+}
 
 $py = Join-Path $venv 'Scripts\python.exe'
-& $py -m pip install -U pip wheel
+if (!(Test-Path $py)) { throw 'venv python not found.' }
 
-# constraints の指定があれば使用、なければルートの constraints.txt を自動検出
+# upgrade pip tooling
+& $py -m pip install -U pip setuptools wheel
+
+# install requirements (with optional constraints)
 if ($Constraints) {
-  $con = (Resolve-Path $Constraints).Path
-  & $py -m pip install -r $req -c $con
+  if (!(Test-Path $Constraints)) { throw "constraints not found: $Constraints" }
+  & $py -m pip install -r $req -c (Resolve-Path $Constraints).Path
 } elseif (Test-Path (Join-Path $repoRoot 'constraints.txt')) {
   & $py -m pip install -r $req -c (Join-Path $repoRoot 'constraints.txt')
 } else {
   & $py -m pip install -r $req
 }
 
-Write-Host "Setup OK. repoRoot = $repoRoot"
+Write-Host "setup done. repoRoot=$repoRoot"
