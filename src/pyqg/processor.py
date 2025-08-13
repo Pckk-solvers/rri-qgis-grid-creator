@@ -11,11 +11,12 @@ from contextlib import contextmanager
 # デフォルト値
 MIN_SLOPE = 0.1
 THRESHOLD = 5
+QGIS_VERSION = "3.34.9"
 
 # qgis_process のパスを環境変数またはデフォルトで取得
 QGIS_PROCESS = os.getenv(
     "QGIS_PROCESS_PATH",
-    r"C:\Program Files\QGIS 3.34.9\bin\qgis_process-qgis-ltr.bat"
+    r"C:\Program Files\QGIS " + QGIS_VERSION + r"\bin\qgis_process-qgis-ltr.bat"
 )
 if not os.path.isfile(QGIS_PROCESS):
     print(f"ERROR: qgis_process が見つかりません: {QGIS_PROCESS}", file=sys.stderr)

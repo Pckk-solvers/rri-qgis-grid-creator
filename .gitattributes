@@ -1,4 +1,15 @@
-*.md eol=crlf
-*.bat text eol=crlf
-*.cmd text eol=crlf
-*.py eol=crlf
+# デフォルトはテキスト扱い
+* text=auto
+
+# いつでも LF にしたいもの
+*.py   text eol=lf
+*.ps1  text eol=lf
+*.psm1 text eol=lf
+*.psd1 text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.sh   text eol=lf
+
+# Windows のバッチは CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
