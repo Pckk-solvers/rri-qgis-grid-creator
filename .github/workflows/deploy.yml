@@ -26,7 +26,7 @@ jobs:
       - name: PyInstaller build (${{ matrix.mode }})
         run: |
           if ('${{ matrix.mode }}' -eq 'onedir') {
-            pyinstaller --module src `
+            pyinstaller --paths=src `
               --onedir -y --clean --console `
               --name main `
               --runtime-hook rthooks\rt_gdal_env.py `
@@ -34,7 +34,7 @@ jobs:
               --collect-data pyproj `
               --log-level=WARN
           } else {
-            pyinstaller --module src `
+            pyinstaller --paths=src `
               --onefile -y --clean --console `
               --name main `
               --runtime-hook rthooks\rt_gdal_env.py `
