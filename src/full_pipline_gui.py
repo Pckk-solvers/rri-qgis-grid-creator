@@ -14,11 +14,13 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
 
-# srcディレクトリをパスに追加する。
-sys.path.append(str(Path(__file__).parent.parent))
+try:
+    from .make_shp.zcol_list import get_zcol_list
+    from .common.help_txt_read import load_help_text
+    from .run_full_pipeline import run_full_pipeline
+except ImportError:
+    raise SystemExit("モジュールが見つかりませんでした。")
 
-from make_shp.zcol_list import get_zcol_list
-from src.common.help_txt_read import load_help_text, apply_tokens, resolve_base_dir
 
 def get_base_dir() -> Path:
     """
@@ -44,17 +46,6 @@ def find_default_stdmesh() -> str | None:
             return str(shp)
     return None
 
-
-# run_full_pipeline モジュール読み込み
-sys.path.append(str(BASE_DIR))
-try:
-    from run_full_pipeline import run_full_pipeline
-except ImportError as e:
-    message = (
-        "run_full_pipeline モジュールが見つかりませんでした。\n"
-        "full_pipeline_gui.py と同じ階層、または PYTHONPATH に追加してください。"
-    )
-    raise SystemExit(message) from e
 
 
 class FullPipelineApp(ttk.Frame):

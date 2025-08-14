@@ -1,78 +1,63 @@
-name: Build and Draft Release Windows EXE
-
+name: build
 on:
-  push:
-    # v1.11, v2.0 など “v数字.数字” のタグをプッシュしたときに実行
-    tags:
-      - 'v*.*'
   workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
-  build-and-release:
+  win-build:
     runs-on: windows-latest
-    env:
-      # タグ名そのまま（例: "v1.11"）
-      VERSION: ${{ github.ref_name }}
-
+    strategy:
+      matrix:
+        mode: [onedir, onefile]
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
+          cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install deps
         run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt pyinstaller
+          python -m pip install -U pip wheel
+          pip install -r requirements.txt -c constraints.txt
 
-      - name: Build EXE via PyInstaller CLI (onedir)
-        shell: bash
+      - name: PyInstaller build (${{ matrix.mode }})
         run: |
-          pyinstaller --onedir \
-            --name "RQGC-${{ env.VERSION }}-win" \
-            --paths "src" \
-            --add-data "config\\standard_mesh.shx;config" \
-            --add-data "config\\standard_mesh.shp;config" \
-            --add-data "config\\standard_mesh.prj;config" \
-            --add-data "config\\standard_mesh.dbf;config" \
-            --add-data "config\\standard_mesh.cpg;config" \
-            --collect-data rasterio \
-            --collect-binaries rasterio \
-            --hidden-import "rasterio._shim" \
-            --hidden-import "rasterio.sample" \
-            --hidden-import "tkinter" \
-            --hidden-import "tkinter.ttk" \
-            --hidden-import "tkinter.filedialog" \
-            --hidden-import "tkinter.messagebox" \
-            --strip \
-            --console \
-            src\\full_pipline_gui.py
+          if ('${{ matrix.mode }}' -eq 'onedir') {
+            pyinstaller .src\full_pipline_gui.py `
+              --onedir -y --clean --console `
+              --name main `
+              --runtime-hook rthooks\rt_gdal_env.py `
+              --collect-all rasterio `
+              --collect-data pyproj `
+              --log-level=WARN
+          } else {
+            pyinstaller .src\full_pipline_gui.py `
+              --onefile -y --clean --console `
+              --name main `
+              --runtime-hook rthooks\rt_gdal_env.py `
+              --collect-all rasterio `
+              --collect-data pyproj `
+              --log-level=WARN
+          }
 
-      - name: Zip the output folder
+      - name: Smoke test
         shell: pwsh
+        env:
+          APP_NO_PAUSE: "1"
         run: |
-          Compress-Archive -Path dist\RQGC-${{ env.VERSION }}-win -DestinationPath dist\RQGC-${{ env.VERSION }}-win.zip
+          $exe = if ('${{ matrix.mode }}' -eq 'onefile') { '.\dist\main.exe' } else { '.\dist\main\main.exe' }
+          & $exe | Select-String "GDAL from rasterio" | Out-Null
 
-      - name: Create GitHub Release (draft)
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.VERSION }}
-          release_name: Release ${{ env.VERSION }}
-          draft: true
-          prerelease: false
 
-      - name: Upload ZIP as Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/RQGC-${{ env.VERSION }}-win.zip
-          asset_name: RQGC-${{ env.VERSION }}-win.zip
-          asset_content_type: application/zip
+          name: main-${{ matrix.mode }}-windows
+          path: |
+            dist/main.exe
+            dist/main/**
+          if-no-files-found: ignore
+          retention-days: 7
