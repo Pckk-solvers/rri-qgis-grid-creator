@@ -36,7 +36,7 @@
 
 例 ↓
    ```bat
-   cd C:\tools\rri-qgis-grid-creator-zip
+   cd C:\tools\rri-qgis-grid-creator-shared
    ```
 3. 初回セットアップ（仮想環境作成 + 依存関係インストール）
 
