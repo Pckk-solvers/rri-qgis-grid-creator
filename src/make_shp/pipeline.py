@@ -4,7 +4,7 @@ import argparse
 import glob
 from src.make_shp.add_elevation import main as elevation_main
 from src.make_shp.extract_standard_mesh import extract_cells
-from shp_to_asc.mesh_to_asc import convert_mesh_to_asc
+from src.shp_to_asc.mesh_to_asc import convert_mesh_to_asc
 from src.make_shp.generate_mesh import main as generate_mesh_main
 
 

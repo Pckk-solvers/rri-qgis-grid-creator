@@ -14,12 +14,9 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox, scrolledtext
 
-try:
-    from .make_shp.zcol_list import get_zcol_list
-    from .common.help_txt_read import load_help_text
-    from .run_full_pipeline import run_full_pipeline
-except ImportError:
-    raise SystemExit("モジュールが見つかりませんでした。")
+from src.make_shp.zcol_list import get_zcol_list
+from src.common.help_txt_read import load_help_text
+from src.run_full_pipeline import run_full_pipeline
 
 
 def get_base_dir() -> Path:
