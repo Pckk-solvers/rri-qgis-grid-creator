@@ -17,16 +17,11 @@
         [--min-slope 最小勾配] \
         [--threshold 閾値]
 """
-import os
-import sys
 import argparse
 from pathlib import Path
 
-try:
-    from src.make_shp.pipeline import pipeline
-    from pyqg.processor import process_dem
-except ImportError:
-    raise SystemExit("モジュールが見つかりませんでした。")
+from src.make_shp.pipeline import pipeline
+from src.pyqg.processor import process_dem
 
 def run_full_pipeline(
     domain_shp,

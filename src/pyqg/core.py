@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
-import os
 import sys
 import argparse
 from pathlib import Path
 
 # 自作モジュールのインポート
-try:
-    from .processor import process_dem
-    from .processor import MIN_SLOPE, THRESHOLD  # デフォルト値をインポート
-except ImportError:
-    from processor import process_dem
-    from processor import MIN_SLOPE, THRESHOLD
+from src.pyqg.processor import process_dem
+from src.pyqg.processor import MIN_SLOPE, THRESHOLD  # デフォルト値をインポート
 
 def main():
     """

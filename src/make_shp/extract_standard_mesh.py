@@ -16,7 +16,6 @@ Usage:
 """
 import argparse
 import os
-import sys
 import geopandas as gpd
 
 def extract_cells(standard_shp, domain_shp, output_shp, id_col=None):
