@@ -1,0 +1,6 @@
+from src.full_pipline_gui import main
+from src.common.imports_check import check_all
+
+if __name__ == "__main__":
+    check_all()
+    main()
