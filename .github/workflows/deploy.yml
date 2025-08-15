@@ -32,7 +32,8 @@ jobs:
               --runtime-hook rthooks\rt_gdal_env.py `
               --collect-all rasterio `
               --collect-data pyproj `
-              --log-level=WARN
+              --log-level=WARN `
+              .\src\__main__.py
           } else {
             pyinstaller --paths=src `
               --onefile -y --clean --console `
@@ -40,7 +41,8 @@ jobs:
               --runtime-hook rthooks\rt_gdal_env.py `
               --collect-all rasterio `
               --collect-data pyproj `
-              --log-level=WARN
+              --log-level=WARN `
+              .\src\__main__.py
           }
 
       - name: Smoke test
