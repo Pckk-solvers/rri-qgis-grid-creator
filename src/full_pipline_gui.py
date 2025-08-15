@@ -69,7 +69,7 @@ class FullPipelineApp(ttk.Frame):
         """UI ウィジェットの構築"""
         paddings = dict(padx=4, pady=4)
         paddings2 = dict(padx=4, pady=20)
-        lbl_w = 18
+        lbl_w = 22
         ent_w = 70
 
         # 左右分割ペインの作成
@@ -102,7 +102,6 @@ class FullPipelineApp(ttk.Frame):
             "3. 点群CSVファイルを選択\n"
             "4. オプションを設定\n"
             "5. [実行]ボタンをクリック\n\n"
-            "※ 必須項目は赤いアスタリスク(*)で表示されています\n"
         )
 
         def _set_help_text():
@@ -122,71 +121,77 @@ class FullPipelineApp(ttk.Frame):
 
         # （任意）再読込ボタン
         ttk.Button(help_frame, text="ヘルプを再読込", command=_set_help_text).pack(anchor="ne", pady=(5, 0))
+        
+        # QGIS-LTRのバージョンを入力デフォルトは3.34.9
+        ttk.Label(form, text="QGIS-LTRのバージョン", width=lbl_w, anchor="e").grid(row=0, column=0, **paddings)
+        self.qgis_version_var = tk.StringVar(value="3.34.9")
+        ttk.Entry(form, textvariable=self.qgis_version_var, width=20,).grid(row=0, column=1,sticky="w", **paddings)
 
         # 計算領域 (.shp) 入力
-        ttk.Label(form, text="計算領域 (.shp)", width=lbl_w, anchor="e").grid(row=0, column=0, **paddings)
+        ttk.Label(form, text="計算領域 (.shp)", width=lbl_w, anchor="e").grid(row=1, column=0, **paddings)
         self.domain_var = tk.StringVar()
-        ttk.Entry(form, textvariable=self.domain_var, width=ent_w, state="readonly").grid(row=0, column=1, **paddings)
-        ttk.Button(form, text="参照", command=self._browse_domain).grid(row=0, column=2, **paddings)
+        ttk.Entry(form, textvariable=self.domain_var, width=ent_w, state="readonly").grid(row=1, column=1, **paddings)
+        ttk.Button(form, text="参照", command=self._browse_domain).grid(row=1, column=2, **paddings)
 
         # 流域界 (.shp) 入力
-        ttk.Label(form, text="流域界 (.shp)", width=lbl_w, anchor="e").grid(row=1, column=0, **paddings)
+        ttk.Label(form, text="流域界 (.shp)", width=lbl_w, anchor="e").grid(row=2, column=0, **paddings)
         self.basin_var = tk.StringVar()
-        ttk.Entry(form, textvariable=self.basin_var, width=ent_w, state="readonly").grid(row=1, column=1, **paddings)
-        ttk.Button(form, text="参照", command=self._browse_basin).grid(row=1, column=2, **paddings)
+        ttk.Entry(form, textvariable=self.basin_var, width=ent_w, state="readonly").grid(row=2, column=1, **paddings)
+        ttk.Button(form, text="参照", command=self._browse_basin).grid(row=2, column=2, **paddings)
 
         # 点群CSV（複数可）入力
-        ttk.Label(form, text="点群CSV（複数可）", width=lbl_w, anchor="e").grid(row=2, column=0, **paddings)
+        ttk.Label(form, text="点群CSV (複数可)", width=lbl_w, anchor="e").grid(row=3, column=0, **paddings)
         self.points_var = tk.StringVar()
-        ttk.Entry(form, textvariable=self.points_var, width=ent_w, state="readonly").grid(row=2, column=1, **paddings)
-        ttk.Button(form, text="参照", command=self._browse_points).grid(row=2, column=2, **paddings)
+        ttk.Entry(form, textvariable=self.points_var, width=ent_w, state="readonly").grid(row=3, column=1, **paddings)
+        ttk.Button(form, text="参照", command=self._browse_points).grid(row=3, column=2, **paddings)
 
         # 標準メッシュ (.shp) 入力 (デフォルト設定済み)
-        ttk.Label(form, text="標準メッシュ (.shp)", width=lbl_w, anchor="e").grid(row=3, column=0, **paddings)
+        ttk.Label(form, text="標準メッシュ (.shp)", width=lbl_w, anchor="e").grid(row=4, column=0, **paddings)
         init_std = self.default_stdmesh if self.default_stdmesh else ""
         self.stdmesh_var = tk.StringVar(value=init_std)
-        ttk.Entry(form, textvariable=self.stdmesh_var, width=ent_w, state="readonly").grid(row=3, column=1, **paddings)
-        ttk.Button(form, text="参照", command=self._browse_stdmesh).grid(row=3, column=2, **paddings)
+        ttk.Entry(form, textvariable=self.stdmesh_var, width=ent_w, state="readonly").grid(row=4, column=1, **paddings)
+        ttk.Button(form, text="参照", command=self._browse_stdmesh).grid(row=4, column=2, **paddings)
 
-        # メッシュ分割数
-        ttk.Label(form, text="メッシュ分割数:", width=lbl_w, anchor='e').grid(row=4, column=0, **paddings)
-        self.cells_var = tk.StringVar(value="20")
+        # メッシュ分割数（IntVar に変更）  <-- 変更点
+        ttk.Label(form, text="メッシュ分割数", width=lbl_w, anchor='e').grid(row=5, column=0, **paddings)
+        self.cells_var = tk.IntVar(value=20)  # 文字列から IntVar に変更してキャスト問題を防ぐ
         ttk.Spinbox(form, from_=1, to=1000, textvariable=self.cells_var, width=10).grid(
-            row=4, column=1, **paddings, sticky='w')
+            row=5, column=1, **paddings, sticky='w')
 
-        # 標高列名リスト
-        ttk.Label(form, text="標高列名", width=lbl_w, anchor="e").grid(row=5, column=0, **paddings)
+        # 標高列名
+        ttk.Label(form, text="標高列名", width=lbl_w, anchor="e").grid(row=6, column=0, **paddings)
         self.zcol_var = ttk.Combobox(form, width=20, state="readonly")
-        self.zcol_var.grid(row=5, column=1, sticky="w", **paddings)
+        self.zcol_var.grid(row=6, column=1, sticky="w", **paddings)
         
-        # NoData 値（任意）
-        ttk.Label(form, text="NoData 値（任意）", width=lbl_w, anchor="e").grid(row=6, column=0, **paddings)
+        # NoData 値
+        ttk.Label(form, text="NoData 値", width=lbl_w, anchor="e").grid(row=7, column=0, **paddings)
         self.nodata_var = tk.DoubleVar(value=-9999)
-        ttk.Entry(form, textvariable=self.nodata_var, width=20).grid(row=6, column=1, sticky="w", **paddings)
+        ttk.Entry(form, textvariable=self.nodata_var, width=20).grid(row=7, column=1, sticky="w", **paddings)
 
-        # 最小勾配（pyqg）
-        ttk.Label(form, text="最小勾配（pyqg）", width=lbl_w, anchor="e").grid(row=7, column=0, **paddings)
+        # 最小勾配（MINSLOPE）
+        ttk.Label(form, text="最小勾配 (MINSLOPE)", width=lbl_w, anchor="e").grid(row=8, column=0, **paddings)
         self.minslope_var = tk.DoubleVar(value=0.1)
-        ttk.Entry(form, textvariable=self.minslope_var, width=20).grid(row=7, column=1, sticky="w", **paddings)
+        ttk.Entry(form, textvariable=self.minslope_var, width=20).grid(row=8, column=1, sticky="w", **paddings)
 
-        # 閾値（pyqg）
-        ttk.Label(form, text="閾値（pyqg）", width=lbl_w, anchor="e").grid(row=8, column=0, **paddings)
+        # 閾値（THRESHOLD）
+        ttk.Label(form, text="閾値 (THRESHOLD)", width=lbl_w, anchor="e").grid(row=9, column=0, **paddings)
         self.threshold_var = tk.IntVar(value=5)
-        ttk.Entry(form, textvariable=self.threshold_var, width=20).grid(row=8, column=1, sticky="w", **paddings)
+        ttk.Entry(form, textvariable=self.threshold_var, width=20).grid(row=9, column=1, sticky="w", **paddings)
 
         # 出力フォルダ
-        ttk.Label(form, text="出力フォルダ", width=lbl_w, anchor="e").grid(row=9, column=0, **paddings)
+        ttk.Label(form, text="出力フォルダ", width=lbl_w, anchor="e").grid(row=10, column=0, **paddings)
         default_output = str(BASE_DIR / "outputs")
         self.outdir_var = tk.StringVar(value=default_output)
-        ttk.Entry(form, textvariable=self.outdir_var, width=ent_w, state="readonly").grid(row=9, column=1, **paddings)
-        ttk.Button(form, text="参照", command=self._browse_outdir).grid(row=9, column=2, **paddings)
+        ttk.Entry(form, textvariable=self.outdir_var, width=ent_w, state="readonly").grid(row=10, column=1, **paddings)
+        ttk.Button(form, text="参照", command=self._browse_outdir).grid(row=10, column=2, **paddings)
 
         # ステータスバー
         self.status_var = tk.StringVar()
-        ttk.Label(form, textvariable=self.status_var).grid(row=10, column=1, **paddings2)
+        ttk.Label(form, textvariable=self.status_var).grid(row=11, column=1, **paddings2)
 
-        # 実行ボタン
-        ttk.Button(form, text="実行", command=self._run, style="Accent.TButton").grid(row=10, column=2, **paddings2)
+        # 実行ボタン（参照できるようにインスタンス化しておく） <-- 変更点: self.run_button を保持
+        self.run_button = ttk.Button(form, text="実行", command=self._run, style="Accent.TButton")
+        self.run_button.grid(row=11, column=2, **paddings2)
 
     def _browse_domain(self) -> None:
         """計算領域ファイルを選択"""
@@ -268,43 +273,101 @@ class FullPipelineApp(ttk.Frame):
             messagebox.showerror("エラー", "標高列が選択されていません。CSVを選択して標高列を選択してください。")
             return
 
+        # UI の保護: 実行中は押せないようにする
+        self.run_button.config(state="disabled")
         self.status_var.set("実行中…")
         threading.Thread(target=self._worker, daemon=True).start()
 
     def _worker(self) -> None:
-        """バックグラウンドワーカー"""
+        """バックグラウンドワーカー（型キャスト・戻り値チェックを含む）"""
         try:
+            # ファイルリスト
             points = self.points_var.get().split(";")
             selected_zcol = self.zcol_var.get()
-            
-            run_full_pipeline(
+
+            # 型キャスト（IntVar / DoubleVar を使っているため基本は安全だが念のため検査）
+            try:
+                num_cells = int(self.cells_var.get())
+            except Exception:
+                raise ValueError("メッシュ分割数は整数で指定してください。")
+
+            try:
+                min_slope = float(self.minslope_var.get())
+            except Exception:
+                raise ValueError("最小勾配は数値で指定してください。")
+
+            try:
+                threshold = int(self.threshold_var.get())
+            except Exception:
+                raise ValueError("閾値は整数で指定してください。")
+
+            # nodata の扱い: 空入力や 0 を "None" と見なしたい場合はここで調整可能
+            nodata_raw = self.nodata_var.get()
+            # ここでは「0 を None に扱う」想定（必要なら条件を変更）
+            nodata = None if nodata_raw == 0 else nodata_raw
+
+            # QGIS バージョン（ユーザ入力をトリムして空文字 -> None に）
+            qgis_version = self.qgis_version_var.get().strip() or None
+
+            # run_full_pipeline を呼ぶ（例外が起きる可能性もあるので結果を受け取る）
+            result = run_full_pipeline(
                 domain_shp=self.domain_var.get(),
                 basin_shp=self.basin_var.get(),
-                num_cells_x=self.cells_var.get(),
-                num_cells_y=self.cells_var.get(),
+                num_cells_x=num_cells,
+                num_cells_y=num_cells,  # 片側指定方式を維持（必要なら UI を分けてください）
                 points_path=points,
                 standard_mesh=self.stdmesh_var.get(),
                 output_dir=self.outdir_var.get(),
                 zcol=selected_zcol,
-                nodata=(None if self.nodata_var.get() == 0 else self.nodata_var.get()),
-                min_slope=self.minslope_var.get(),
-                threshold=self.threshold_var.get(),
+                nodata=nodata,
+                min_slope=min_slope,
+                threshold=threshold,
+                qgis_version=qgis_version,
+                qgis_process_path=None
             )
-            self.queue.put(("info", "処理が完了しました！"))
+
+            # run_full_pipeline の戻り値をチェック（あなたの実装が dict を返す想定）
+            if isinstance(result, dict):
+                if result.get("success") is True:
+                    # 正常終了
+                    self.queue.put(("info", "処理が完了しました！"))
+                else:
+                    # エラー情報がある場合は表示
+                    err_msg = result.get("error") or "不明なエラーが発生しました"
+                    err_type = result.get("error_type")
+                    if err_type:
+                        err_msg = f"{err_type}: {err_msg}"
+                    self.queue.put(("error", f"処理に失敗しました。\n{err_msg}"))
+            else:
+                # 非辞書（既存コードが None / True を返す場合などの保険）
+                self.queue.put(("info", "処理が終了しました（戻り値が予想フォーマットではありません）。"))
+
         except Exception as e:
+            # 例外が発生した場合はエラーメッセージをキューに入れて UI 側で表示
             self.queue.put(("error", str(e)))
+        finally:
+            # 常に実行ボタンを有効化するためのシグナルを送る
+            # UI操作はメインスレッドで行わせるため queue 経由で通知
+            self.queue.put(("enable_run_button", ""))
 
     def _poll_queue(self) -> None:
         """キューをポーリングしてUI更新"""
         try:
-            kind, msg = self.queue.get_nowait()
-            if kind == "info":
-                messagebox.showinfo("完了", msg)
-                self.status_var.set("完了")
-            else:
-                messagebox.showerror("エラー", msg)
-                self.status_var.set("エラー発生")
-            self.queue.task_done()
+            while True:
+                kind, msg = self.queue.get_nowait()
+                if kind == "info":
+                    messagebox.showinfo("完了", msg)
+                    self.status_var.set("完了")
+                elif kind == "error":
+                    messagebox.showerror("エラー", msg)
+                    self.status_var.set("エラー発生")
+                elif kind == "enable_run_button":
+                    # 常に run_button を再有効化
+                    self.run_button.config(state="normal")
+                else:
+                    # 未知のメッセージはステータスに表示
+                    self.status_var.set(msg or "")
+                self.queue.task_done()
         except queue.Empty:
             pass
         finally:
