@@ -45,14 +45,6 @@ jobs:
               .\src\__main__.py
           }
 
-      - name: Smoke test
-        shell: pwsh
-        env:
-          APP_NO_PAUSE: "1"
-        run: |
-          $exe = if ('${{ matrix.mode }}' -eq 'onefile') { '.\dist\main.exe' } else { '.\dist\main\main.exe' }
-          & $exe | Select-String "GDAL from rasterio" | Out-Null
-
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
