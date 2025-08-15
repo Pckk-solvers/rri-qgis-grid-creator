@@ -30,6 +30,7 @@ jobs:
               --onedir -y --clean --console `
               --name main `
               --runtime-hook rthooks\rt_gdal_env.py `
+              --add-data "config;config" `
               --collect-all rasterio `
               --collect-data pyproj `
               --log-level=WARN `
@@ -39,6 +40,7 @@ jobs:
               --onefile -y --clean --console `
               --name main `
               --runtime-hook rthooks\rt_gdal_env.py `
+              --add-data "config;config" `
               --collect-all rasterio `
               --collect-data pyproj `
               --log-level=WARN `
