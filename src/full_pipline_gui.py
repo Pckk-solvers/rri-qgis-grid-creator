@@ -282,10 +282,10 @@ class FullPipelineApp(ttk.Frame):
         """バックグラウンドワーカー（型キャスト・戻り値チェックを含む）"""
         try:
             # ファイルリスト
-            points = self.points_var.get().split(";")
+            points = [p for p in self.points_var.get().split(";") if p]
             selected_zcol = self.zcol_var.get()
 
-            # 型キャスト（IntVar / DoubleVar を使っているため基本は安全だが念のため検査）
+            # 型キャスト
             try:
                 num_cells = int(self.cells_var.get())
             except Exception:
@@ -301,20 +301,19 @@ class FullPipelineApp(ttk.Frame):
             except Exception:
                 raise ValueError("閾値は整数で指定してください。")
 
-            # nodata の扱い: 空入力や 0 を "None" と見なしたい場合はここで調整可能
+            # nodata: 0 を None 扱い（必要に応じて調整）
             nodata_raw = self.nodata_var.get()
-            # ここでは「0 を None に扱う」想定（必要なら条件を変更）
             nodata = None if nodata_raw == 0 else nodata_raw
 
-            # QGIS バージョン（ユーザ入力をトリムして空文字 -> None に）
+            # QGIS バージョン（空文字は None）
             qgis_version = self.qgis_version_var.get().strip() or None
 
-            # run_full_pipeline を呼ぶ（例外が起きる可能性もあるので結果を受け取る）
+            # 実行
             result = run_full_pipeline(
                 domain_shp=self.domain_var.get(),
                 basin_shp=self.basin_var.get(),
                 num_cells_x=num_cells,
-                num_cells_y=num_cells,  # 片側指定方式を維持（必要なら UI を分けてください）
+                num_cells_y=num_cells,  # 片側指定方式のまま
                 points_path=points,
                 standard_mesh=self.stdmesh_var.get(),
                 output_dir=self.outdir_var.get(),
@@ -326,29 +325,38 @@ class FullPipelineApp(ttk.Frame):
                 qgis_process_path=None
             )
 
-            # run_full_pipeline の戻り値をチェック（あなたの実装が dict を返す想定）
+            # --- 成否のみ判定（簡潔版） ---
+            success = True
+            error_msg = None
+
             if isinstance(result, dict):
-                if result.get("success") is True:
-                    # 正常終了
-                    self.queue.put(("info", "処理が完了しました！"))
-                else:
-                    # エラー情報がある場合は表示
-                    err_msg = result.get("error") or "不明なエラーが発生しました"
-                    err_type = result.get("error_type")
-                    if err_type:
-                        err_msg = f"{err_type}: {err_msg}"
-                    self.queue.put(("error", f"処理に失敗しました。\n{err_msg}"))
+                success = bool(result.get("success", True))
+                if not success:
+                    # 失敗時だけ最低限の情報をまとめる（任意）
+                    et  = result.get("error_type")
+                    st  = result.get("stage")
+                    em  = result.get("error") or "処理に失敗しました。"
+                    parts = []
+                    if et: parts.append(et)
+                    if st: parts.append(f"stage={st}")
+                    header = " / ".join(parts)
+                    error_msg = f"{header}\n{em}" if header else em
+
+            elif isinstance(result, bool):
+                success = result
+
+            # 表示
+            if success:
+                self.queue.put(("info", "処理が完了しました。"))
             else:
-                # 非辞書（既存コードが None / True を返す場合などの保険）
-                self.queue.put(("info", "処理が終了しました（戻り値が予想フォーマットではありません）。"))
+                self.queue.put(("error", error_msg or "処理に失敗しました。"))
+            # ------------------------------
 
         except Exception as e:
-            # 例外が発生した場合はエラーメッセージをキューに入れて UI 側で表示
             self.queue.put(("error", str(e)))
         finally:
-            # 常に実行ボタンを有効化するためのシグナルを送る
-            # UI操作はメインスレッドで行わせるため queue 経由で通知
             self.queue.put(("enable_run_button", ""))
+
 
     def _poll_queue(self) -> None:
         """キューをポーリングしてUI更新"""
