@@ -19,21 +19,28 @@ from src.common.help_txt_read import load_help_text
 from src.run_full_pipeline import run_full_pipeline
 
 
-def get_base_dir() -> Path:
+def get_base_output_dir() -> tuple[Path, Path]:
     """
-    実行環境に応じた“プロジェクトルート”を返す。
-      - 通常の Python 実行時: スクリプトの一つ上のディレクトリをプロジェクトルートとみなす
-      - PyInstaller --onedir 時: 実行ファイルのあるディレクトリ
-      - PyInstaller --onefile 時: sys._MEIPASS の一時展開先
+    実行環境に応じた“プロジェクトルート”と出力ディレクトリを返す。
+      - 通常の Python 実行時: スクリプトの一つ上のディレクトリをプロジェクトルートとし、outputs サブディレクトリを使用
+      - PyInstaller 実行時: 実行ファイルと同じディレクトリに outputs ディレクトリを作成して使用
     """
     if getattr(sys, "frozen", False):
         # PyInstaller でバンドルされた環境
-        return Path(sys._MEIPASS) if hasattr(sys, "_MEIPASS") else Path(sys.executable).parent
-    # 普通にスクリプト実行しているときは src/ の一つ上をルートに
-    return Path(__file__).resolve().parent.parent
+        exe_dir = Path(sys.executable).parent
+        output_dir = exe_dir / "outputs"
+        output_dir.mkdir(exist_ok=True)  # outputs ディレクトリがなければ作成
+        base_dir = Path(sys._MEIPASS) if hasattr(sys, "_MEIPASS") else exe_dir
+    else:
+        # 通常の Python 実行時
+        base_dir = Path(__file__).resolve().parent.parent
+        output_dir = base_dir / "outputs"
+    
+    return base_dir, output_dir
+
 
 # 関数を使って一括設定
-BASE_DIR   = get_base_dir()
+BASE_DIR, OUTPUT_DIR   = get_base_output_dir()
 CONFIG_DIR = BASE_DIR / "config"
 
 def find_default_stdmesh() -> str | None:
@@ -180,7 +187,7 @@ class FullPipelineApp(ttk.Frame):
 
         # 出力フォルダ
         ttk.Label(form, text="出力フォルダ", width=lbl_w, anchor="e").grid(row=10, column=0, **paddings)
-        default_output = str(BASE_DIR / "outputs")
+        default_output = str(OUTPUT_DIR)
         self.outdir_var = tk.StringVar(value=default_output)
         ttk.Entry(form, textvariable=self.outdir_var, width=ent_w, state="readonly").grid(row=10, column=1, **paddings)
         ttk.Button(form, text="参照", command=self._browse_outdir).grid(row=10, column=2, **paddings)
