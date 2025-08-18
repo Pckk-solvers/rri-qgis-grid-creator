@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [switch]$Recreate,              # remove and recreate venv
   [string]$Requirements,          # optional custom path to requirements.txt
@@ -6,7 +6,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-Set-StrictMode -Version Latest
+# Set-StrictMode -Version Latest
 
 # repo root = parent of this script folder
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
