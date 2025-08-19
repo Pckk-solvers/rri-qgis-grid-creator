@@ -88,8 +88,10 @@ def _must_exist(path: str | Path, label: str):
         raise FileNotFoundError(f"{label} が空ファイルとして生成されました: {p}")
 
 # ── 一時 SDAT 管理 ───────────────────────────────────────────
+from typing import Generator
+
 @contextmanager
-def temp_sdat_files(*filenames: str) -> Dict[str, str]:
+def temp_sdat_files(*filenames: str) -> Generator[Dict[str, str], None, None]:
     """一時的なSDATファイルを作成し、処理後に削除するコンテキストマネージャー"""
     temp_dir = tempfile.mkdtemp()
     temp_files = {}
