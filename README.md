@@ -94,15 +94,14 @@ python -m src
 3. 分割セル数（X=Y）、NODATA 値、最小勾配・閾値などのパラメータを設定
 4. 出力先フォルダを指定し **実行**
 
-### 出力先
+### 出力先（デフォルト）
+* `outputs/mesh/`
+     * domain_mesh_elev.shp … 標高値を付与したメッシュデータ
+     * domain_mesh_elev.asc … 窪地処理前の標高データ
 
-* `outputs/mesh/` … メッシュ生成・標高付与・ASC 変換
-
-**（修正予定）**
 * `outputs/pyqg/`
-     * `filled.asc` … 窪地処理をした標高データ
+     * `filled.asc` … 窪地処理後の標高データ
      * `direction.asc` … 流向データ（RRIで利用）
-
 ---
 
 ## 使い方（CLI 例）
