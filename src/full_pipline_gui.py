@@ -322,7 +322,7 @@ class FullPipelineApp(ttk.Frame):
                 num_cells_x=num_cells,
                 num_cells_y=num_cells,  # 片側指定方式のまま
                 points_path=points,
-                standard_mesh=self.stdmesh_var.get(),
+                standard_mesh=self.default_stdmesh,
                 output_dir=self.outdir_var.get(),
                 zcol=selected_zcol,
                 nodata=nodata,
