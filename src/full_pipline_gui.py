@@ -152,13 +152,6 @@ class FullPipelineApp(ttk.Frame):
         ttk.Entry(form, textvariable=self.points_var, width=ent_w, state="readonly").grid(row=3, column=1, **paddings)
         ttk.Button(form, text="参照", command=self._browse_points).grid(row=3, column=2, **paddings)
 
-        # 標準メッシュ (.shp) 入力 (デフォルト設定済み)
-        ttk.Label(form, text="標準メッシュ (.shp)", width=lbl_w, anchor="e").grid(row=4, column=0, **paddings)
-        init_std = self.default_stdmesh if self.default_stdmesh else ""
-        self.stdmesh_var = tk.StringVar(value=init_std)
-        ttk.Entry(form, textvariable=self.stdmesh_var, width=ent_w, state="readonly").grid(row=4, column=1, **paddings)
-        ttk.Button(form, text="参照", command=self._browse_stdmesh).grid(row=4, column=2, **paddings)
-
         # メッシュ分割数（IntVar に変更）  <-- 変更点
         ttk.Label(form, text="メッシュ分割数", width=lbl_w, anchor='e').grid(row=5, column=0, **paddings)
         self.cells_var = tk.IntVar(value=20)  # 文字列から IntVar に変更してキャスト問題を防ぐ
@@ -246,15 +239,6 @@ class FullPipelineApp(ttk.Frame):
             self.zcol_var.set('')
             messagebox.showerror("エラー", f"標高列の取得中にエラーが発生しました:\n{str(e)}")
 
-    def _browse_stdmesh(self):
-        """標準メッシュファイルを選択する"""
-        file_path = filedialog.askopenfilename(
-            title="標準メッシュファイルを選択",
-            filetypes=[("Shapefile", "*.shp")]
-        )
-        if file_path:
-            self.stdmesh_var.set(file_path)
-
     def _browse_outdir(self) -> None:
         """出力フォルダを選択し、絶対パスで設定"""
         d = filedialog.askdirectory()
@@ -264,13 +248,9 @@ class FullPipelineApp(ttk.Frame):
             self.outdir_var.set(str(abs_path))
 
     def _run(self) -> None:
-        """入力チェックとバックグラウンド実行"""
-        # 標準メッシュが空の場合は default_stdmesh を使用
-        if not self.stdmesh_var.get() and self.default_stdmesh:
-            self.stdmesh_var.set(self.default_stdmesh)
-            
+        """入力チェックとバックグラウンド実行"""            
         # 必須項目のチェック
-        if not all([self.domain_var.get(), self.basin_var.get(), self.points_var.get(), self.stdmesh_var.get()]):
+        if not all([self.domain_var.get(), self.basin_var.get(), self.points_var.get()]):
             messagebox.showerror("エラー", "必須項目が入力されていません。")
             return
             

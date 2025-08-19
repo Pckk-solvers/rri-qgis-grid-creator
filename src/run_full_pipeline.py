@@ -42,7 +42,7 @@ def run_full_pipeline(
     # パスをPathオブジェクトに変換
     output_dir = Path(output_dir)
     mesh_dir = output_dir / "mesh"
-    pyqg_dir = output_dir / "pyqg"
+    pyqg_dir = output_dir / "RRI_dataset"
 
     mesh_dir.mkdir(parents=True, exist_ok=True)
     pyqg_dir.mkdir(parents=True, exist_ok=True)
@@ -104,7 +104,7 @@ def run_full_pipeline(
             'stage': 'pyqg',
             'mesh_dir': str(mesh_dir),
             'pyqg_dir': str(pyqg_dir),
-            'error': pyqg_result.get('error', 'pyqg 処理で不明なエラー'),
+            'error': pyqg_result.get('error', 'RRI_dataset 処理で不明なエラー'),
             'error_type': pyqg_result.get('error_type')
         }
 
@@ -127,7 +127,7 @@ def run_full_pipeline(
     }
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="メッシュ生成からpyqg処理までのフルパイプラインを実行")
+    parser = argparse.ArgumentParser(description="メッシュ生成からRRI_dataset処理までのフルパイプラインを実行")
     
     # 必須引数
     parser.add_argument("--domain", required=True, help="計算領域ポリゴン (.shp)")
