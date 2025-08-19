@@ -99,8 +99,10 @@ python -m src
 
 * `outputs/mesh/` … メッシュ生成・標高付与・ASC 変換
 
-  * 例: `domain_mesh_elev.asc`（RRI 等で利用）
-* `outputs/pyqg/` … 窪地埋め、流向、チャネル抽出などの前処理成果
+**（修正予定）**
+* `outputs/pyqg/`
+     * `filled.asc` … 窪地処理をした標高データ
+     * `direction.asc` … 流向データ（RRIで利用）
 
 ---
 
