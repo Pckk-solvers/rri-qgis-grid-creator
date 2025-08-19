@@ -99,7 +99,7 @@ python -m src
      * domain_mesh_elev.shp … 標高値を付与したメッシュデータ
      * domain_mesh_elev.asc … 窪地処理前の標高データ
 
-* `outputs/pyqg/`
+* `outputs/RRI_datase/`
      * `filled.asc` … 窪地処理後の標高データ
      * `direction.asc` … 流向データ（RRIで利用）
 ---
