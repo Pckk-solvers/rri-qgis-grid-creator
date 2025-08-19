@@ -80,7 +80,6 @@ python -m src
 * **計算領域**: Shapefile（ポリゴン）
 * **流域界**: Shapefile（ポリゴン）
 * **点群**: CSV または Shapefile
-
   * CSV の場合、列名 `x`, `y` 必須（小文字）。標高列は自動検出または GUI で指定
 * **標準地域メッシュ**: `config/standard_mesh.*`（同梱）
 
