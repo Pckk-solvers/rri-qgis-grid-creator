@@ -22,6 +22,7 @@
 * OS: Windows 10/11（64bit）
 * Python: 3.12–3.13
 * QGIS: 3.34 LTR または 3.40 系（Processing + SAGA NextGen, GDAL 有効）
+* Processing Saga NextGen Providerをプラグインとしてインストールする必要があります。
 
 > `qgis_process`（LTR）を使用します。標準外の場所に QGIS を入れている場合は、環境変数 `QGIS_PROCESS_PATH` を設定してください。
 
