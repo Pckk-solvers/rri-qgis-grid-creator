@@ -28,6 +28,7 @@ QGIS と Python を用いて、RRI モデル用の計算格子とDEM前処理（
 
 注意:
 - QGISのProcessing/SAGAを使用します。QGISのインストールと`qgis_process`のパス設定が必要になります（`docs/cmd_command.md` 参照）。
+- Processing Saga NextGen Providerというプラグインのインストールが必要です。
 
 ## セットアップ
 
